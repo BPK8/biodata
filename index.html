@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    font-family:Poppins,sans-serif;
+    background:linear-gradient(135deg,#6a11cb,#ff5f9e,#ff9a8b);
+    background-size:300% 300%;
+    animation:bg 8s infinite alternate;
+    color:#fff
+}
+@keyframes bg{to{background-position:100% 50%}}
+
+.card{
+    width:340px;
+    padding:34px 30px;
+    border-radius:22px;
+    background:rgba(0,0,0,.35);
+    backdrop-filter:blur(20px);
+    box-shadow:0 25px 60px rgba(0,0,0,.4);
+    animation:fade .35s ease
+}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}}
+
+h2{
+    margin:0 0 18px;
+    font-weight:600;
+    letter-spacing:.5px
+}
+
+input{
+    width:100%;
+    padding:13px 15px;
+    margin-top:14px;
+    border:none;border-radius:14px;
+    background:rgba(255,255,255,.15);
+    color:#fff;outline:none
+}
+input::placeholder{color:#ddd}
+
+button{
+    width:100%;
+    margin-top:22px;
+    padding:14px;
+    border:none;border-radius:16px;
+    background:linear-gradient(135deg,#ffe259,#ffa751);
+    font-weight:600;
+    cursor:pointer
+}
+button:hover{opacity:.9}
+
+.link{
+    margin-top:14px;
+    text-align:center;
+    font-size:13px;
+    opacity:.7;
+    cursor:pointer
+}
+.link:hover{opacity:1}
+
+.error{
+    display:none;
+    margin-top:12px;
+    text-align:center;
+    font-size:13px;
+    color:#ffcccc
+}
+
+.foto{
+    width:140px;height:140px;
+    border-radius:50%;
+    object-fit:cover;
+    display:block;
+    margin:0 auto 18px;
+    border:3px solid rgba(255,255,255,.5)
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="card" id="loginPage">
+<h2>Login</h2>
+<input id="loginID" placeholder="Username">
+<input id="loginPW" type="password" placeholder="Password">
+<button onclick="login()">Masuk</button>
+<p class="error" id="loginError">Akun tidak ditemukan</p>
+<p class="link" onclick="show('forgotPage')">Lupa password?</p>
+<p class="link" onclick="show('registerPage')">Belum punya akun</p>
+</div>
+
+<!-- REGISTER -->
+<div class="card" id="registerPage" style="display:none">
+<h2>Buat Akun</h2>
+<input id="regID" placeholder="Username">
+<input id="regPW" type="password" placeholder="Password">
+<input id="regNama" placeholder="Nama">
+<input id="regNIM" placeholder="NIM">
+<input id="regJurusan" placeholder="Jurusan">
+<input id="regKonsen" placeholder="Konsentrasi">
+<input id="regFoto" type="file">
+<button onclick="register()">Daftar</button>
+<p class="error" id="regError">Lengkapi semua data</p>
+<p class="link" onclick="show('loginPage')">Sudah punya akun</p>
+</div>
+
+<!-- FORGOT -->
+<div class="card" id="forgotPage" style="display:none">
+<h2>Reset Password</h2>
+<input id="cekNIM" placeholder="NIM kamu">
+<input id="newPW" type="password" placeholder="Password baru" style="display:none">
+<button id="forgotBtn" onclick="cekNIM()">Verifikasi</button>
+<p class="error" id="forgotError">NIM tidak cocok</p>
+<p class="link" onclick="show('loginPage')">Kembali</p>
+</div>
+
+<!-- BIODATA -->
+<div class="card" id="biodataPage" style="display:none">
+<img id="bioFoto" class="foto">
+<p id="bioNama"></p>
+<p id="bioNIM"></p>
+<p id="bioJurusan"></p>
+<p id="bioKonsen"></p>
+<button onclick="show('loginPage')">Keluar</button>
+</div>
+
+<script>
+const pages=["loginPage","registerPage","forgotPage","biodataPage"];
+const show=p=>{
+    pages.forEach(id=>document.getElementById(id).style.display=id==p?"block":"none");
+    document.querySelectorAll(".error").forEach(e=>e.style.display="none");
+};
+const user=()=>JSON.parse(localStorage.getItem("userdata"));
+
+function register(){
+    const u={
+        id:regID.value.trim(),pw:regPW.value,
+        nama:regNama.value,nim:regNIM.value,
+        jurusan:regJurusan.value,konsen:regKonsen.value
+    };
+    if(Object.values(u).some(v=>!v)||!regFoto.files[0]){
+        regError.style.display="block";return
+    }
+    const r=new FileReader();
+    r.onload=()=>{
+        u.foto=r.result;
+        localStorage.setItem("userdata",JSON.stringify(u));
+        show("loginPage");
+    };
+    r.readAsDataURL(regFoto.files[0]);
+}
+
+function login(){
+    const u=user();
+    if(!u||loginID.value!=u.id||loginPW.value!=u.pw){
+        loginError.style.display="block";return
+    }
+    bioFoto.src=u.foto;
+    bioNama.innerText="Nama: "+u.nama;
+    bioNIM.innerText="NIM: "+u.nim;
+    bioJurusan.innerText="Jurusan: "+u.jurusan;
+    bioKonsen.innerText="Konsentrasi: "+u.konsen;
+    show("biodataPage");
+}
+
+function cekNIM(){
+    const u=user();
+    if(!u||cekNIM.value!=u.nim){
+        forgotError.style.display="block";return
+    }
+    newPW.style.display="block";
+    forgotBtn.innerText="Ganti Password";
+    forgotBtn.onclick=()=>{
+        if(!newPW.value)return;
+        u.pw=newPW.value;
+        localStorage.setItem("userdata",JSON.stringify(u));
+        show("loginPage");
+    };
+}
+</script>
+
+</body>
+</html>
